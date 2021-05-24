@@ -1,5 +1,6 @@
 const Usuario = require('../models/Usuario')
 const bcrypt = require('bcryptjs')
+const {generarJWT} = require('../helpers/jwt')
 
 const crearUsuario = async (req, res) => {
 
@@ -20,10 +21,14 @@ const crearUsuario = async (req, res) => {
         usuario.password = bcrypt.hashSync(password, salt)
 
         await usuario.save()
+        
+        const token = await generarJWT(usuario.id, usuario.name)
     
         res.status(201).json({
             ok: true,
-            msg: 'Usuario registrado'
+            uid: usuario.id,
+            name: usuario.name,
+            token
         })    
     } catch (error) {
         console.log(error)
@@ -34,15 +39,42 @@ const crearUsuario = async (req, res) => {
     }
 }
 
-const loginUsuario = (req, res) => {
+const loginUsuario = async (req, res) => {
     const {email, password} = req.body
 
-    res.status(200).json({
-        ok: true,
-        msg: 'login usuario',
-        email,
-        password
-    })
+    try {
+        const usuario = await Usuario.findOne({email})          
+        if (!usuario) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'Usuario o contraseña incorrectos'
+            })
+        }
+        //confirmar la password
+        const validPassword = bcrypt.compareSync(password, usuario.password)
+        if(!validPassword) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'Contraseña incorrecta'
+            })
+        }        
+        const token = await generarJWT(usuario.id, usuario.name)
+
+        res.json({
+            ok: true,
+            msg: 'Login correcto',
+            uid: usuario.id,
+            name: usuario.name,
+            token
+
+        })
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            ok: false,
+            msg: 'Algo salio mal, por favor intente de nuevo más tarde'
+        })   
+    }    
 }
 
 const revalidarToken = (req, res) => {
