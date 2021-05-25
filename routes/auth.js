@@ -31,7 +31,7 @@ router.post(
     ],
     loginUsuario
 )
-router.post(
+router.get(
     '/renew', 
     [
         validarJWT
