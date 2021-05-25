@@ -96,7 +96,7 @@ const eliminarEvento = async (req, res) => {
             })
         }
 
-        await Evento.findByIdAndDelete(eventoI)
+        await Evento.findByIdAndDelete(eventoID)
         res.status(200).json({
             ok: true,
             msg: 'Evento eliminado'
